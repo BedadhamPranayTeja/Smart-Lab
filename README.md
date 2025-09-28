@@ -34,3 +34,21 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Database (Neon)
+
+This project can run against a Neon Postgres database using serverless driver.
+
+1. Create a Neon project and a database. Copy the connection string.
+2. Set env var locally (e.g. `.env.local`) and on Vercel:
+
+```
+NEON_DATABASE_URL=postgres://user:password@host/db?sslmode=require
+```
+
+3. On first request, the API will run lightweight migrations and seed demo data if empty.
+
+Notes:
+- Serverless driver: `@neondatabase/serverless`
+- Files: `src/lib/db.ts` (client, migrations, seed)
+- Routes using DB: `/api/attendance/check-in`, `/api/attendance/check-out`, `/api/attendance/logs`, `/api/desk/status`
