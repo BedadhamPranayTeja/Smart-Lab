@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
-import { mockAttendanceLogs, mockStudents } from "@/lib/data";
+import { migrate, seedIfEmpty, sql } from "@/lib/db";
 
 export async function GET() {
-  // Enrich logs with student names
-  const enrichedLogs = mockAttendanceLogs.map((log) => {
-    const student = mockStudents.find((s) => s.student_id === log.student_id);
-    return {
-      ...log,
-      student_name: student?.name || "Unknown",
-    };
-  });
+  await migrate();
+  await seedIfEmpty();
+
+  const rows = await sql<any[]>`
+    SELECT l.log_id, l.student_id, s.name as student_name, l.desk_id, l.entry_time, l.exit_time, l.duration_minutes, l.status
+    FROM attendance_logs l
+    JOIN students s ON s.student_id = l.student_id
+    ORDER BY l.entry_time DESC
+  `;
 
   return NextResponse.json({
     status: "ok",
-    logs: enrichedLogs,
-    total: enrichedLogs.length,
+    logs: rows,
+    total: rows.length,
   });
 }
