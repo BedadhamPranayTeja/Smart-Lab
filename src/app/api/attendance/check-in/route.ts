@@ -24,6 +24,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure student does not already have an active session
+    const existingActive = mockAttendanceLogs.find(
+      (log) => log.student_id === student_id && log.status === "active"
+    );
+    if (existingActive) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: "Student already checked in",
+        },
+        { status: 409 }
+      );
+    }
+
     // Find available desk
     const availableDesk = mockDesks.find((d) => d.status === "available");
     if (!availableDesk) {
@@ -39,13 +53,26 @@ export async function POST(request: NextRequest) {
     // Simulate hardware response time
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Mock successful check-in
+    // Mark desk as occupied
+    availableDesk.status = "occupied";
+
+    // Create attendance log entry
+    const newLog = {
+      log_id: Date.now().toString(),
+      student_id: student.student_id,
+      desk_id: availableDesk.desk_id,
+      entry_time: new Date().toISOString(),
+      status: "active" as const,
+    };
+    mockAttendanceLogs.unshift(newLog);
+
+    // Mock successful check-in response
     const response = {
       status: "ok",
       student_id: student.student_id,
       name: student.name,
-      entry_time: new Date().toISOString(),
-      desk_id: availableDesk.desk_id,
+      entry_time: newLog.entry_time,
+      desk_id: newLog.desk_id,
       present: true,
       hardware_type,
       actions: {
